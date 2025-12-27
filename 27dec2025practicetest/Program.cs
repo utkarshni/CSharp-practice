@@ -32,7 +32,7 @@ namespace MediSureClinic
                         ClearLastBill();
                         break;
                     case "4":
-                        Console.WriteLine("Exiting application...");
+                        Console.WriteLine("Thank you. Application closed normally");
                         return;
                     default:
                         Console.WriteLine("Invalid option. Please choose between 1 and 4.");
@@ -117,3 +117,4 @@ namespace MediSureClinic
         }
     }
 }
+
