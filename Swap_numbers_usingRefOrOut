@@ -1,0 +1,47 @@
+-----Using ref-----
+using System;
+
+class Program
+{
+    static void SwapUsingRef(ref int a, ref int b)
+    {
+        int temp = a;
+        a = b;
+        b = temp;
+    }
+
+    static void Main()
+    {
+        int x = 10;
+        int y = 20;
+
+        SwapUsingRef(ref x, ref y);
+
+        Console.WriteLine("x = " + x); // 20
+        Console.WriteLine("y = " + y); // 10
+    }
+}
+-----using out-----
+using System;
+
+class Program
+{
+    static void SwapUsingOut(out int a, out int b)
+    {
+        int x = 10;
+        int y = 20;
+
+        a = y;
+        b = x;
+    }
+
+    static void Main()
+    {
+        int x, y;   // no initialization required
+
+        SwapUsingOut(out x, out y);
+
+        Console.WriteLine("x = " + x); // 20
+        Console.WriteLine("y = " + y); // 10
+    }
+}
