@@ -1,0 +1,54 @@
+using System;
+
+class Program
+{
+    public static string EvaluateExpression(string expression)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+            return "Error:InvalidExpression";
+
+        var parts = expression.Split(' ');
+
+        // Must be exactly "a op b"
+        if (parts.Length != 3)
+            return "Error:InvalidExpression";
+
+        string aStr = parts[0];
+        string op = parts[1];
+        string bStr = parts[2];
+
+        // Validate numbers
+        if (!int.TryParse(aStr, out int a) || !int.TryParse(bStr, out int b))
+            return "Error:InvalidNumber";
+
+        // Validate operator + compute
+        switch (op)
+        {
+            case "+":
+                return (a + b).ToString();
+
+            case "-":
+                return (a - b).ToString();
+
+            case "*":
+                return (a * b).ToString();
+
+            case "/":
+                if (b == 0)
+                    return "Error:DivideByZero";
+                return (a / b).ToString();
+
+            default:
+                return "Error:UnknownOperator";
+        }
+    }
+
+    static void Main()
+    {
+        string expression = "10 / 2";
+
+        string result = EvaluateExpression(expression);
+
+        Console.WriteLine(result);
+    }
+}
