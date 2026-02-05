@@ -1,0 +1,26 @@
+using System;
+
+class Program
+{
+    public static int LargestOfThree(int a, int b, int c)
+    {
+        int largest = a;
+
+        if (b > largest)
+            largest = b;
+
+        if (c > largest)
+            largest = c;
+
+        return largest;
+    }
+
+    static void Main()
+    {
+        int a = 10;
+        int b = 25;
+        int c = 15;
+
+        Console.WriteLine(LargestOfThree(a, b, c));
+    }
+}
