@@ -1,0 +1,60 @@
+using System;
+using System.Linq;
+using System.Text.Json;
+using System.Collections.Generic;
+
+public record Student(string Name, int Score);
+
+class Program
+{
+    public static string BuildStudentJson(string[] items, int minScore)
+    {
+        if (items == null || items.Length == 0)
+            return "[]";
+
+        List<Student> students = new List<Student>(items.Length);
+
+        foreach (var item in items)
+        {
+            if (string.IsNullOrWhiteSpace(item))
+                continue;
+
+            var parts = item.Split(':');
+            if (parts.Length != 2)
+                continue;
+
+            string name = parts[0];
+
+            if (!int.TryParse(parts[1], out int score))
+                continue;
+
+            students.Add(new Student(name, score));
+        }
+
+        var result = students
+            .Where(s => s.Score >= minScore)
+            .OrderByDescending(s => s.Score)
+            .ThenBy(s => s.Name)
+            .ToList();
+
+        return JsonSerializer.Serialize(result);
+    }
+
+    static void Main()
+    {
+        string[] items =
+        {
+            "Alice:90",
+            "Bob:75",
+            "Charlie:90",
+            "David:60",
+            "Eve:95"
+        };
+
+        int minScore = 80;
+
+        string json = BuildStudentJson(items, minScore);
+
+        Console.WriteLine(json);
+    }
+}
