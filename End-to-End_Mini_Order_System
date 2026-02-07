@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+
+namespace MiniOrderSystem
+{
+  
+
+    class Customer
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int Stock { get; set; }
+
+     
+        public object StockLock = new object();
+    }
+
+    class OrderItem
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+    }
+
+    class Order
+    {
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+
+        public decimal TotalAmount => Items.Sum(x => x.Price * x.Quantity);
+    }
+
+    class Payment
+    {
+        public int PaymentId { get; set; }
+        public int OrderId { get; set; }
+        public decimal Amount { get; set; }
+        public string Status { get; set; }
+    }
+
+    class Cart
+    {
+        public int CustomerId { get; set; }
+        public Dictionary<int, int> Items { get; set; } = new Dictionary<int, int>();
+    }
+
+ 
+    class OrderService
+    {
+        private Dictionary<int, Product> _products;
+        private Dictionary<int, Cart> _carts = new Dictionary<int, Cart>();
+        private List<Order> _orders = new List<Order>();
+
+        private int _orderId = 1;
+
+        public OrderService(List<Product> products)
+        {
+            _products = products.ToDictionary(p => p.Id);
+        }
+
+    
+        public void AddToCart(int customerId, int productId, int qty)
+        {
+            if (!_products.ContainsKey(productId))
+                throw new Exception("Product not found");
+
+            if (!_carts.ContainsKey(customerId))
+                _carts[customerId] = new Cart { CustomerId = customerId };
+
+            var cart = _carts[customerId];
+
+            if (cart.Items.ContainsKey(productId))
+                cart.Items[productId] += qty;
+            else
+                cart.Items[productId] = qty;
+        }
+
+
+        public Order PlaceOrder(int customerId)
+        {
+            if (!_carts.ContainsKey(customerId))
+                throw new Exception("Cart is empty");
+
+            var cart = _carts[customerId];
+
+          
+            var productsToLock = cart.Items.Keys
+                .Select(id => _products[id])
+                .OrderBy(p => p.Id)
+                .ToList();
+
+         
+            foreach (var p in productsToLock)
+                Monitor.Enter(p.StockLock);
+
+            try
+            {
+                foreach (var item in cart.Items)
+                {
+                    var product = _products[item.Key];
+                    if (product.Stock < item.Value)
+                        throw new Exception($"Insufficient stock for {product.Name}");
+                }
+
+        
+                foreach (var item in cart.Items)
+                {
+                    var product = _products[item.Key];
+                    product.Stock -= item.Value;
+                }
+
+               
+                var order = new Order
+                {
+                    OrderId = _orderId++,
+                    CustomerId = customerId,
+                    Items = cart.Items.Select(i => new OrderItem
+                    {
+                        ProductId = i.Key,
+                        Quantity = i.Value,
+                        Price = _products[i.Key].Price
+                    }).ToList()
+                };
+
+                _orders.Add(order);
+
+                // Clear Cart
+                _carts.Remove(customerId);
+
+                return order;
+            }
+            finally
+            {
+                // Release locks
+                foreach (var p in productsToLock)
+                    Monitor.Exit(p.StockLock);
+            }
+        }
+    }
+
+    
+
+    class Program
+    {
+        static void Main()
+        {
+            var products = new List<Product>
+            {
+                new Product { Id = 1, Name = "Laptop", Price = 50000, Stock = 5 },
+                new Product { Id = 2, Name = "Mouse", Price = 500, Stock = 10 },
+                new Product { Id = 3, Name = "Keyboard", Price = 1500, Stock = 7 }
+            };
+
+            var orderService = new OrderService(products);
+
+            orderService.AddToCart(1, 1, 1);
+            orderService.AddToCart(1, 2, 2);
+
+            try
+            {
+                var order = orderService.PlaceOrder(1);
+
+                Console.WriteLine("Order Placed Successfully!");
+                Console.WriteLine($"Order Id: {order.OrderId}");
+                Console.WriteLine($"Total Amount: {order.TotalAmount}");
+
+                Console.WriteLine("\nRemaining Stock:");
+                foreach (var p in products)
+                {
+                    Console.WriteLine($"{p.Name} → {p.Stock}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            Console.ReadLine();
+        }
+    }
+}
