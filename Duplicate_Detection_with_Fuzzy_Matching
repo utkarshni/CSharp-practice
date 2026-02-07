@@ -1,0 +1,174 @@
+using System;
+using System.Collections.Generic;
+
+namespace DuplicateCustomerDetection
+{
+
+    public class Customer
+    {
+        public int Id;
+        public string Name;
+        public string Email;
+        public string Phone;
+    }
+
+    public class DuplicateGroup
+    {
+        public List<Customer> Customers = new List<Customer>();
+    }
+
+    public class DuplicateFinder
+    {
+        public List<DuplicateGroup> FindDuplicates(List<Customer> customers)
+        {
+            int n = customers.Count;
+
+            int[] parent = new int[n];
+            for (int i = 0; i < n; i++)
+                parent[i] = i;
+
+          
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = i + 1; j < n; j++)
+                {
+                    if (IsDuplicate(customers[i], customers[j]))
+                    {
+                        Union(parent, i, j);
+                    }
+                }
+            }
+
+            var groupMap = new Dictionary<int, DuplicateGroup>();
+
+            for (int i = 0; i < n; i++)
+            {
+                int root = Find(parent, i);
+
+                if (!groupMap.ContainsKey(root))
+                    groupMap[root] = new DuplicateGroup();
+
+                groupMap[root].Customers.Add(customers[i]);
+            }
+
+            var result = new List<DuplicateGroup>();
+            foreach (var g in groupMap.Values)
+            {
+                if (g.Customers.Count > 1)
+                    result.Add(g);
+            }
+
+            return result;
+        }
+
+        private bool IsDuplicate(Customer a, Customer b)
+        {
+            
+            if (!string.IsNullOrEmpty(a.Phone) && a.Phone == b.Phone)
+                return true;
+
+            if (!string.IsNullOrEmpty(a.Email) &&
+                a.Email.Equals(b.Email, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+          
+            double similarity = NameSimilarity(a.Name, b.Name);
+            if (similarity >= 0.8)
+                return true;
+
+            return false;
+        }
+
+        private double NameSimilarity(string a, string b)
+        {
+            if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b))
+                return 0;
+
+            int dist = EditDistance(a.ToLower(), b.ToLower());
+            int maxLen = Math.Max(a.Length, b.Length);
+
+            return 1.0 - (double)dist / maxLen;
+        }
+
+        private int EditDistance(string s1, string s2)
+        {
+            int[,] dp = new int[s1.Length + 1, s2.Length + 1];
+
+            for (int i = 0; i <= s1.Length; i++)
+                dp[i, 0] = i;
+
+            for (int j = 0; j <= s2.Length; j++)
+                dp[0, j] = j;
+
+            for (int i = 1; i <= s1.Length; i++)
+            {
+                for (int j = 1; j <= s2.Length; j++)
+                {
+                    if (s1[i - 1] == s2[j - 1])
+                        dp[i, j] = dp[i - 1, j - 1];
+                    else
+                    {
+                        dp[i, j] = 1 + Math.Min(
+                            dp[i - 1, j],
+                            Math.Min(dp[i, j - 1], dp[i - 1, j - 1])
+                        );
+                    }
+                }
+            }
+
+            return dp[s1.Length, s2.Length];
+        }
+
+        private int Find(int[] parent, int x)
+        {
+            if (parent[x] != x)
+                parent[x] = Find(parent, parent[x]);
+
+            return parent[x];
+        }
+
+        private void Union(int[] parent, int a, int b)
+        {
+            int rootA = Find(parent, a);
+            int rootB = Find(parent, b);
+
+            if (rootA != rootB)
+                parent[rootB] = rootA;
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            var customers = new List<Customer>
+            {
+                new Customer { Id=1, Name="Rahul Sharma", Email="rahul@gmail.com", Phone="111" },
+                new Customer { Id=2, Name="Rahul S.", Email="rahul@gmail.com", Phone="222" },
+                new Customer { Id=3, Name="Rohit Mehta", Email="rohit@gmail.com", Phone="333" },
+                new Customer { Id=4, Name="Rahul Sharm", Email="rahul2@gmail.com", Phone="999" },
+                new Customer { Id=5, Name="Amit Verma", Email="amit@gmail.com", Phone="555" },
+                new Customer { Id=6, Name="Amit V.", Email="amit2@gmail.com", Phone="555" }
+            };
+
+            var finder = new DuplicateFinder();
+            var groups = finder.FindDuplicates(customers);
+
+            Console.WriteLine("Duplicate Groups Found:\n");
+
+            int groupNo = 1;
+            foreach (var g in groups)
+            {
+                Console.WriteLine($"Group {groupNo++}:");
+                foreach (var c in g.Customers)
+                {
+                    Console.WriteLine($"  {c.Id} - {c.Name} - {c.Email} - {c.Phone}");
+                }
+                Console.WriteLine();
+            }
+
+            Console.ReadLine();
+        }
+    }
+}
+
