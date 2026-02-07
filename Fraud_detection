@@ -1,0 +1,86 @@
+public class FraudDetector
+{
+    public List<FraudAlert> DetectFraud(List<Transaction> txns)
+    {
+        var alerts = new List<FraudAlert>();
+
+        var cardMap = new Dictionary<string, List<Transaction>>();
+
+        foreach (var txn in txns)
+        {
+            if (!cardMap.ContainsKey(txn.CardNumber))
+                cardMap[txn.CardNumber] = new List<Transaction>();
+
+            cardMap[txn.CardNumber].Add(txn);
+        }
+
+        foreach (var kvp in cardMap)
+        {
+            string card = kvp.Key;
+            var list = kvp.Value;
+
+            list.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+
+            var high = new List<Transaction>();
+
+            foreach (var t in list)
+            {
+                if (t.Amount > 50000)
+                    high.Add(t);
+            }
+
+            for (int i = 0; i < high.Count; i++)
+            {
+                int count = 1;
+                DateTime start = high[i].Timestamp;
+
+                for (int j = i + 1; j < high.Count; j++)
+                {
+                    if ((high[j].Timestamp - start).TotalMinutes <= 2)
+                        count++;
+                    else
+                        break;
+                }
+
+                if (count >= 3)
+                {
+                    alerts.Add(new FraudAlert
+                    {
+                        CardNumber = card,
+                        RuleTriggered = "3 high-value transactions within 2 minutes",
+                        DetectedAt = DateTime.UtcNow
+                    });
+                    break;
+                }
+            }
+
+            bool rule2Triggered = false;
+
+            for (int i = 0; i < list.Count && !rule2Triggered; i++)
+            {
+                for (int j = i + 1; j < list.Count; j++)
+                {
+                    double diff = (list[j].Timestamp - list[i].Timestamp).TotalMinutes;
+
+                    if (diff > 10)
+                        break;
+
+                    if (list[i].City != list[j].City)
+                    {
+                        alerts.Add(new FraudAlert
+                        {
+                            CardNumber = card,
+                            RuleTriggered = "Same card used in different cities within 10 minutes",
+                            DetectedAt = DateTime.UtcNow
+                        });
+
+                        rule2Triggered = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return alerts;
+    }
+}
