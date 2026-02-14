@@ -1,0 +1,60 @@
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        // Initial Book Input
+        string[] input = Console.ReadLine().Split(' ');
+
+        string bookId = input[0];
+        string title = input[1];
+        int price = int.Parse(input[2]);
+        int stock = int.Parse(input[3]);
+
+        bool exit = false;
+
+        while (!exit)
+        {
+            int choice = int.Parse(Console.ReadLine());
+
+            if (choice == 1)
+            {
+                Console.WriteLine("Details: " + bookId + " " + title + " " + price + " " + stock);
+            }
+            else if (choice == 2)
+            {
+                int newPrice = int.Parse(Console.ReadLine());
+
+                if (newPrice < 0)
+                {
+                    Console.WriteLine("Price cannot be negative");
+                }
+                else
+                {
+                    price = newPrice;
+                    Console.WriteLine("Updated Price: " + price);
+                }
+            }
+            else if (choice == 3)
+            {
+                int newStock = int.Parse(Console.ReadLine());
+
+                if (newStock < 0)
+                {
+                    Console.WriteLine("Stock cannot be negative");
+                }
+                else
+                {
+                    stock = newStock;
+                    Console.WriteLine("Updated Stock: " + stock);
+                }
+            }
+            else if (choice == 4)
+            {
+                Console.WriteLine("Thank You");
+                exit = true;
+            }
+        }
+    }
+}
