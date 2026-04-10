@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="Auth.API/Auth.API.csproj" />
+  <Project Path="Auth.Tests/Auth.Tests.csproj" />
+  <Project Path="Employee.API/Employee.API.csproj" />
+  <Project Path="Gateway.API/Gateway.API.csproj" Id="13660f71-1b0b-4695-ac11-4e3419c378f4" />
+  <Project Path="Leave.API/Leave.API.csproj" />
+  <Project Path="Manager.API/Manager.API.csproj" Id="c02bd3b0-30da-48b6-b6e1-0f52fa7c890d" />
+  <Project Path="Shared.Library/Shared.Library.csproj" Id="fc9a9d88-f262-4ac7-916e-3e93f416fa45" />
+  <Project Path="Timesheet.API/Timesheet.API.csproj" Id="0ebf4697-65e4-4582-b28d-d7ec61132b1a" />
+</Solution>
